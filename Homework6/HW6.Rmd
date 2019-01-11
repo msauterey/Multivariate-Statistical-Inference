@@ -1,0 +1,215 @@
+---
+title: "HW6"
+author: "Mathieu Sauterey"
+date: "April 13, 2018"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+# Problem 1
+
+Over a 5-year period regular samples of fishermen on 28 lakes in Wisconsin were asked to report the time they spent fishing and how many of each type of game fish they caught. Their responses were then converted to a catch rate per hour for:
+
+$x_1$ = Bluegill
+$x_2$ = Black crappie
+$x_3$ = Smallmouth bass
+$x_4$ = Largemouth bass
+
+The estimated correlation matrix given below is based on a sample of about 120 (there were a few missing values).
+
+```{r}
+
+# Creates the sample correlation matrix given by the problem
+R <- matrix(c(1,0.4919,0.2636,0.4653, 0.4919, 1, 0.3127,0.3506,
+              0.2636, 0.3127, 1, 0.4108, 0.4653, 0.3506, 0.4108, 1),
+            nrow = 4, ncol = 4)
+R
+```
+
+## (a) Obtain the principal component solution for a factor model with k = 1.
+
+```{r}
+
+# First, we perform a spectral decomposition on R to get its evalues and evectors
+Gamma <- eigen(R)$vectors
+Lambda <- diag(eigen(R)$values)
+
+# Then we calculate Q_hat for k = 1 (one common factor)
+Q_hat <- (Gamma %*% sqrt(Lambda) )[,1]
+Q_hat
+
+# We calculate Psi_hat (uniquenesses)
+Psi_hat <- diag(diag(R - Q_hat %*% t(Q_hat)))
+Psi_hat
+
+R - (Q_hat %*% t(Q_hat) + Psi_hat)
+
+```
+The one-factor model appears to fit the data well.
+
+
+## (b) Obtain the maximum likelihood solution for a factor model with k = 1. Are the principal component and maximum likelihood solutions consistent with each other?
+
+
+```{r}
+
+# The function below performs factor extraction using the MLE method for k=1
+factanal(covmat=R, factors=1, rotation="none")
+
+```
+The one-factor MLE model adequately explains 39% of the total sample variance. From this MLE extraction, we obtain the following loading and uniqueness estimates:
+
+$\hat{\psi}_{MLE}$ = diag(0.498, 0.603, 0.764, 0.574)'
+
+$\hat{Q}_{MLE}$ = (0.708, 0.630, 0.485, 0.653)'
+
+We recall that the principal component (PC) solution was $\hat{Q}_{PC}$  = (-0.773, -0.739, -0.650, -0.767)'. The factor loadings from the principal component and maximum likelihood solutions are consistent with each other. Although their signs are inverted, the relative magnitude of the loadings within each solution is similar.
+
+
+## (c) Obtain the principal component solution for a factor model with k = 2, and rotate your solution. Interpret each factor.
+
+
+
+```{r}
+
+# We calculate Q_hat_k2 for k = 2 (two common factors)
+Q_hat_k2 <- (Gamma %*% sqrt(Lambda) )[,1:2]
+Q_hat_k2
+
+# We calculate Psi_hat_k2 (uniquenesses)
+Psi_hat_k2 <- diag(diag(R - Q_hat_k2 %*% t(Q_hat_k2)))
+Psi_hat_k2
+
+# Uses Varimax to calculate an orthogonal rotation matrix of Q_hat2_k2
+G <- varimax(Q_hat_k2)$rotmat
+G
+
+# Calculate the degree of the varimax rotation
+acos(G[1,1])*180/pi
+
+# Calculates the orthogonal rotation of Q_hat2_k2 
+Q_star <- Q_hat_k2 %*% G
+Q_star
+
+
+```
+
+The factor loadings under the orthogonal rotation are printed above. The rotation is about 38.5 degrees counterclockwise.
+
+The first factor can be interpreted as driving much of components 1, 2 (and somewhat of 4), respectively the hourly catch rates of Bluegill, Black crappie (and Largemouth bass).
+
+The second factor can be interpreted as driving much of components 3 and 4, respectively the hourly catch rates of Smallmouth Bass and Largemouth bass.
+
+# Problem 2
+
+The data file AirPollution.csv contains n = 42 measurements on air pollution variables recorded at 12:00 noon in the Los Angeles area on different days:
+  
+  $x_1$ = Wind
+  $x_2$ = Solar radiation
+  $x_3$ = $NO_2$
+  $x_4$ = $O_3$
+  
+Compute the sample correlation matrix.
+
+```{r}
+
+# Reads the data file and stores the dataset into a dataframe
+data_air <- read.csv("AirPollution.csv")
+
+# Computes the sample correlation matrix
+R2 <- cor(data_air)
+R2
+
+```
+
+
+## (a) Obtain the principal component solution to a factor model with k = 1.
+
+
+```{r}
+
+# First, we perform a spectral decomposition on R to get its evalues and evectors
+Gamma2 <- eigen(R2)$vectors
+Lambda2 <- diag(eigen(R2)$values)
+
+# Then we calculate Q_hat2 for k = 1 (one common factor)
+Q_hat2 <- (Gamma2 %*% sqrt(Lambda2) )[,1]
+Q_hat2
+
+# We calculate Psi_hat2 (uniquenesses)
+Psi_hat2 <- diag(diag(R2 - Q_hat2 %*% t(Q_hat2)))
+Psi_hat2
+
+R2 - (Q_hat2 %*% t(Q_hat2) + Psi_hat2)
+
+
+```
+Thus, from the above 1-factor principal component extraction, we obtain the follwing estimates:
+
+$\hat{Q}_{PC} = (0.564, -0.645, -0.477, -0.770)'$
+
+$\hat{\psi}_{PC} = diag(0.682, 0.584, 0.772, 0.406)'$
+
+## (b) Find the maximum likelihood estimates of Q and Psi for k = 1.
+
+```{r}
+
+# The function below performs factor extraction using the MLE method for k=1
+factanal(~x1+x2+x3+x4, data=data_air, factors=1, rotation="none")
+
+```
+The p-value suggests that the one-factor model adequately describes the data. It explains 23% of the total sample variance. From this above 1-factor MLE extraction, we obtain the following loading and uniqueness estimates:
+
+$\hat{Q}_{MLE} = (-0.324, 0.410, 0.232, 0.771)'$
+
+$\hat{\psi}_{MLE} = diag(0.895, 0.832, 0.946, 0.405)'$
+
+
+
+## (c) Compare the factorization obtained by the principal component and maximum likelihood methods.
+
+
+
+From the 1-factor MLE extraction, we obtain the following loading estimates:
+
+$\hat{Q}_{PC} = (0.564, -0.645, -0.477, -0.770)'$. This solution explains 39% of the total sample variance.
+
+
+
+From the 1-factor principal component extraction, we obtain the following loading estimates:
+
+$\hat{Q}_{MLE} = (-0.324, 0.410, 0.232, 0.771)'$. This solution explains 23% of the total sample variance.
+
+
+The PC solution has a larger proportion of variance explained. The factor loadings from the principal component and maximum likelihood solutions seem to be consistent with each other. Although their signs are inverted, the relative magnitude of the loadings within each solution is fairly similar. 
+
+## (d) Perform a varimax rotation of the principal component solution to a factor model with k = 2. Interpret the results.
+
+```{r}
+
+# Then we calculate Q_hat2_k2 for k = 2 (two common factors)
+Q_hat2_k2 <- (Gamma2 %*% sqrt(Lambda2) )[,1:2]
+Q_hat2_k2
+
+# We calculate Psi_hat2 (uniquenesses)
+Psi_hat2_k2 <- diag(diag(R2 - Q_hat2_k2 %*% t(Q_hat2_k2)))
+Psi_hat2_k2
+
+# Uses Varimax to calculate an orthogonal rotation matrix of Q_hat2_k2
+G2 <- varimax(Q_hat2_k2)$rotmat
+G2
+
+# Calculate the degree of the varimax rotation
+acos(G2[1,1])*180/pi
+
+# Calculates the orthogonal rotation of Q_hat2_k2 
+Q2_star <- Q_hat2_k2 %*% G2
+Q2_star
+
+```
+
+The factor loadings under the orthogonal rotation are printed above. The rotation is about 36 degrees counterclockwise.
+
+The first factor might reasonably be seen as some sort of contrast between Wind speed, and solar radiation and $O_3$ concentrations.
+The second factor might reasonably be seen as some sort of contrast between $NO_2$ and $O_3$ concentrations, and Wind  speed.
