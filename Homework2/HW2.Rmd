@@ -1,0 +1,79 @@
+---
+title: "HW2"
+author: "Mathieu Sauterey"
+date: "15 February 2018"
+output: pdf_document
+---
+
+# Problem 8
+
+The 10 largest U.S. industrial corporations in the 1990 Fortune 500 yielded the following data (in millions of dollars):
+
+
+```{r}
+# Loads dataset from the data CSV file
+data <- read.csv("Companies.csv", as.is = TRUE)
+#data <- as.matrix(data)
+
+print(data)
+```
+
+
+## (a) Study the univariate distributions by constructing boxplots and/or histograms.
+
+```{r}
+par(mfrow=c(2,3))
+
+hist(data$Sales,6, xlab="Sales", main="Histogram of Sales")
+hist(data$Profits,6, xlab = "Profits", main="Histogram of Profits")
+hist(data$Assets,6, xlab = "Assets", main="Histogram of Assets")
+
+boxplot(data$Sales, xlab="Sales", main="Boxplot of Sales")
+boxplot(data$Profits, xlab = "Profits", main="Boxplot of Profits")
+boxplot(data$Assets, xlab = "Assets", main="Boxplot of Assets")
+
+```
+Looking at the histograms we observe that the univariate distributions do not follow any obvious, known distribution. Sales distribution is skewed to the right while Profits are skewed to the left. This skewness is also clearly visible on the boxplots. Assets can be seen as bimodal with highest frequency towards the left end (0~40,000) and right end of the range (160,000+), and lower frequency for profits in between.
+
+
+
+## (b) Construct a scatterplot matrix and describe the relationships among the three variables.
+
+
+```{r}
+
+library(graphics)
+pairs(data)
+
+```
+We observe that Assets seem to have a positive linear association with Sales. The larger the assets, the larger the sales (and vice versa). However, Profits and Assets seem to have a positive curvilinear association. Sales and Profits also seem to have a rather nonlinear association.
+
+
+## (c) Calculate summary statistics: means, standard deviations, and correlations.
+
+```{r}
+
+ave_sales <- mean(data[,1])
+ave_profits <- mean(data[,2])
+ave_assets <- mean(data[,3])
+
+stdev_sales <- sd(data[,1])
+stdev_profits <- sd(data[,2])
+stdev_assets <- sd(data[,3])
+
+corr_matrix <- cor(data)
+
+print(ave_sales)
+print(ave_profits)
+print(ave_assets)
+print(stdev_sales)
+print(stdev_profits)
+print(stdev_assets)
+print(corr_matrix)
+```
+
+The Sales variable has a mean of 62309.2 and a standard deviation of 31630.8
+The Profits variable has a mean of 2927.3 and a standard deviation of 1195.834
+The Assets variable has a mean of 81248.4 and a standard deviation of 54593.86
+
+Correlation between Sales and Profits is 0.676, between Sales and Assets it is 0.875, and between Profits and Assets it is 0.699.
