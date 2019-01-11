@@ -1,0 +1,151 @@
+---
+title: "HW1"
+author: "Mathieu Sauterey"
+date: "7 février 2018"
+output: pdf_document
+---
+
+# Problem 4
+
+The file MS_Data.csv, in the Data folder on Courseworks, contains data related to response stimuli for people suffering from a multiple-sclerosis-caused visual pathology. Two different visual stimuli (S1 and S2) produced responses in both the left eye (L) and the right eye (R) of each of the n = 29 subjects. The values recorded in the data file include:
+
+Variable  Definition      Description 
+x1        Age             Subject's Age
+x2        (S1L +S1R)      Total response of both eyes to stimulus 1
+x3        jS1L S1Rj       Difference between responses of eyes to stimulus 1
+x4        (S2L + S2R)     Total response of both eyes to stimulus 2
+x5        jS2L  S2Rj      Difference between responses of eyes to stimulus 2
+
+
+## a) Construct the scatterplot matrix, and comment on the relationship between variables x2 and x4.
+
+```{r}
+data <- read.csv("MS_Data.csv", as.is = TRUE)
+data <- as.matrix(data)
+
+library(graphics)
+pairs(data)
+
+```
+We clearly see that X2 and X4 have a linear association so collinearity issues may arise.
+
+## b) Compute the sample mean vector, covariance matrix, and correlation matrix using statistical software.
+
+```{r}
+
+# Calculates the sample mean vector
+colMeans(data)
+
+# Calculates the covariance matrix
+cov(data)
+
+# Calculates the correlation matrix
+cor(data)
+
+```
+
+## c) Compute the sample mean vector, covariance matrix, and correlation matrix using matrix algebra.
+
+
+```{r}
+
+n <- nrow(data)
+
+# Calculates the sample mean vector
+X_bar <- (1/n)*t(data) %*% rep(1, time=n)
+print(as.vector(X_bar))
+
+# Calculates the covariance matrix
+S <- 1/(n-1)*t(data) %*% (diag(n) - (1/n)*rep(1,time=n) %*% t(rep(1,time=n))) %*% data
+print(S)
+
+# Calculates the correlation matrix
+R <- diag(1/sqrt(diag(S))) %*% (S) %*% diag(1/sqrt(diag(S)))
+print(R)
+```
+
+# Problem 5
+
+The experiment described in the previous exercise was also conducted on a control group of n = 69 subjects not suffering from the disease. Results are contained in the data file Non_MS.csv, also available on Courseworks. For this exercise we will use variables 2 through 5 only.
+
+
+## a) Suppose researchers are only interested in two variables: total response to both stimuli combined, and total absolute difference between left/right responses. For the ith subject define yi1 = xi2 + xi4 and yi2 = xi3 + xi5 for i = 1, ... , n=69
+
+### i. Find the matrix A for which Y = XA' defines the new data matrix.
+
+
+```{r}
+# Reads the new data
+data2 <- read.csv("Non_MS.csv", as.is = TRUE)
+data2 <- as.matrix(data2[,2:5])
+
+# Creates the relevant matrix A and computes the new data matrix Y
+A <- matrix(c(1,0,1,0,0,1,0,1), ncol = 4, byrow = TRUE)
+Y <- data2 %*% t(A)
+
+print(A)
+head(Y)
+```
+
+### ii. Compute the sample mean vector Y_bar and verify that Y_bar = A*X_bar.
+
+```{r}
+
+# Calculates Y_bar and A*X_bar
+Y_bar <- colMeans(Y)
+AX_bar <- as.vector(A %*% colMeans(data2))
+
+print(Y_bar)
+print(AX_bar)
+```
+Since both results are the same, then we verified that Y_bar = A*X_bar
+
+### iii. Compute the sample covariance matrix Sy and verify that Sy = A*(Sx)*A'.
+
+```{r}
+
+# Calculates the sample covariance matrix of Y
+cov(Y)
+
+# Calculates Sy = A*(Sx)*A'
+Sy <- A %*% cov(data2) %*% t(A)
+print(Sy)
+
+```
+Since both results are the same, then we verified that Sy = A*(Sx)*A'
+
+## b) Working again with the original 69 x 4 data matrix X (4 columns as we are using variables 2 through 5 only):
+
+### i. Find the square root matrix S^(1/2) of the sample covariance matrix.
+
+```{r}
+
+# Calculates the eigenvalues and eigenvectors of X
+evalues <- eigen(cov(data2))$values
+evectors <- eigen(cov(data2))$vectors
+
+# Calculates the square root diagonal matrix
+L <- diag(sqrt(evalues))
+
+# Calculates the square root matrix S^(1/2) of the sample covariance matrix
+S_05 <- evectors %*% L %*% t(evectors)
+print(S_05)
+
+```
+
+### ii. Define a new data matrix by Z=(X-1n*X_bar')*S^(-0.5). Find the mean vector and covariance matrix of Z and explain why they take that form.
+
+```{r}
+
+# Calculates the inverse square root covariance matrix
+S_n05 <- solve(S_05)
+
+
+# Calculates the multivariate standardized data matrix Z
+Z <- (data2 - rep(1,nrow(data2)) %*% t(colMeans(data2))) %*% S_n05
+
+
+colMeans(Z)
+cov(Z)
+```
+This Mahalanobis transformation gives a standardized (centered and scaled), uncorrelated data matrix Z. Theoretically, we know that the average of standardized data along each explanatory variable will be equal to 0. Here, the means that we computed along each variable are indeed very close to 0 (between e-15 and e-17). Then, the covariance matrix of our standardized data is very close to the identity matrix (since e-15 and e-17 are approximately null). Thus the covariance between all pairs of distinct variables is approximately zero. This means that all explanatory variables are uncorrelated, which result is expected from the Mahalanobis transformation.
